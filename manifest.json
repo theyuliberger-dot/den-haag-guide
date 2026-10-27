@@ -1,0 +1,14 @@
+{
+  "name": "המדריך לברגרים בהאג",
+  "short_name": "המדריך",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./#home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F6FA",
+  "theme_color": "#F4F6FA",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
