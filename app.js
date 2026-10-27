@@ -7,6 +7,7 @@ let lang = store.get('lang', 'he');
 let saved = new Set(store.get('saved', []));
 let bought = new Set(store.get('bought', []));
 let weather = null, weatherErr = false;
+let eventsData = null; // events.json, refreshed weekly by a scheduled job
 const filters = { season: [4, 5, 6, 7, 8].includes(new Date().getMonth()) ? 'summer' : 'winter' };
 
 const T = o => (o && typeof o === 'object' ? o[lang] : o);
@@ -52,6 +53,9 @@ const UI = {
   contacts: L(`טלפונים ומיילים`, `Phones and emails`), call: L(`חיוג`, `Call`), apps: L(`אפליקציות ומערכות`, `Apps and systems`),
   rules: L(`כללים חשובים`, `Important rules`), afterSchool: L(`אחרי הלימודים וספורט`, `After school and sport`),
   recSport: L(`ספורט פנאי ומתקנים – תיכון`, `Recreational sport and facilities – Secondary`), trips: L(`טיולים ומשלחות`, `Trips and expeditions`),
+  events: L(`אירועים בהאג`, `Events in The Hague`), evKids: L(`לילדים`, `For kids`), evExpo: L(`תערוכות`, `Exhibitions`),
+  evSoon: L(`נגמר בקרוב`, `Ending soon`), evUntil: L(`עד`, `Until`), evFrom: L(`מ-`, `From `), evSrc: L(`מקור: denhaag.com · מתעדכן פעם בשבוע · עודכן`, `Source: denhaag.com · updated weekly · last updated`),
+  evEmpty: L(`אין כרגע אירועים ברשימה הזו.`, `No events in this list right now.`), evAll: L(`כל האירועים באתר`, `All events on the website`),
   why: L(`למה?`, `Why?`), whatDo: L(`מה עושים?`, `What do people do?`),
   offDays: L(`ימי חופש רשמיים`, `Official days off`), traditions: L(`מסורות ומנהגים`, `Traditions and customs`),
   offYes: L(`יום חופש רשמי`, `Official day off`), offSome: L(`חופש רק לחלק מהאנשים`, `Day off for some people only`),
@@ -64,6 +68,7 @@ const UI = {
     weather: L(`נתונים חיים להאג`, `Live data for The Hague`),
     weekend: L(`בהאג ובטיולי יום בהולנד`, `In The Hague and day trips in the Netherlands`),
     season: L(`מה עושים בחורף ומה בקיץ`, `What to do in winter and in summer`),
+    events: L(`תערוכות, פעילויות לילדים ואירועים עכשוויים`, `Exhibitions, kids' activities and what's on now`),
     abroad: L(`בלגיה, גרמניה, לוקסמבורג, צרפת ואנגליה`, `Belgium, Germany, Luxembourg, France and England`),
     hike: L(`דיונות, יערות וגבעות – בהולנד ומעבר לגבול`, `Dunes, forests and hills – in NL and across the border`),
     climb: L(`בולדרינג, חבל והובלה בהאג ובסביבה`, `Bouldering, rope and lead in and around The Hague`),
@@ -75,6 +80,7 @@ const UI = {
 const NAV = [
   { r: 'home', ic: 'layout-dashboard', k: 'home', sec: 'main' },
   { r: 'calendar', ic: 'calendar-days', k: 'calendar', c: 'sky', sec: 'main' },
+  { r: 'events', ic: 'ticket', k: 'events', c: 'violet', sec: 'main' },
   { r: 'saved', ic: 'heart', k: 'saved', c: 'pink', sec: 'main' },
   { r: 'ish', ic: 'graduation-cap', k: 'ish', c: 'blue', sec: 'cats' },
   { r: 'holidays', ic: 'party-popper', k: 'holidays', c: 'orange', sec: 'cats' },
@@ -97,6 +103,7 @@ const PAGE_FILTERS = {
   ballet: [['all', 'all'], ['learn', 'fLearn'], ['watch', 'fWatch']],
   calendar: [['all', 'all'], ['ish', 'all_ish'], ['nl', 'nl']],
   holidays: [['all', 'all'], ['off', 'offDays'], ['trad', 'traditions']],
+  events: [['all', 'all'], ['kids', 'evKids'], ['expo', 'evExpo'], ['soon', 'evSoon']],
   ish: [['all', 'all'], ['p', 'p'], ['s', 's']],
   animals: [['all', 'all'], ['danger', 'danger'], ['common', 'common'], ['cool', 'cool']],
 };
@@ -355,6 +362,23 @@ const PAGES = {
       <div class="card" style="margin-top:18px"><h2>${icon('sun-moon')}${T(UI.yearLight)}</h2>${year}</div>`;
   },
 
+  events() {
+    const f = filters.events || 'all';
+    const all = (eventsData ? eventsData.items : []).filter(e => e.end >= todayIso());
+    const list = all.filter(e => f === 'all' || (f === 'soon' ? diffDays(e.end) <= 21 : e.cat.includes(f)))
+      .sort((a, b) => a.end.localeCompare(b.end));
+    const card = e => `<article class="card custom"><div class="stat">
+      <div class="tile" style="background:var(--violet-bg);color:var(--violet)">${icon(e.cat.includes('kids') ? 'smile' : e.cat.includes('sport') ? 'snowflake' : 'frame')}</div>
+      <div><h3>${esc(T(e.n))}</h3><p class="lbl">${e.start && e.start > todayIso() ? `${T(UI.evFrom)}${fmt(e.start)} · ` : ''}${T(UI.evUntil)} ${fmt(e.end)}${e.time ? ` · <span class="ltr">${esc(e.time)}</span>` : ''}</p></div></div>
+      <p class="note">${esc(T(e.d))}</p>
+      <div class="acts" style="margin-top:12px"><a class="mini" href="${mapUrl(e.place)}" target="_blank" rel="noopener">${icon('map-pin')}${esc(e.place)}</a>
+      ${e.url ? `<a class="mini" href="${esc(e.url)}" target="_blank" rel="noopener">${icon('external-link')}${T(UI.site)}</a>` : ''}</div></article>`;
+    const body = !eventsData ? `<div class="card">${T(UI.loading)}</div>`
+      : list.length ? `<section class="cards">${list.map(card).join('')}</section>` : `<div class="card empty">${T(UI.evEmpty)}</div>`;
+    const src = eventsData ? `<p class="src">${T(UI.evSrc)} ${fmt(eventsData.updated)} · <a href="${esc(eventsData.source)}" target="_blank" rel="noopener">${T(UI.evAll)}</a></p>` : '';
+    return head(T(UI.events), T(UI.pageSub.events)) + chips('events') + body + src;
+  },
+
   weekend: () => placesPage('weekend'),
   abroad: () => placesPage('abroad'),
   season: () => placesPage('season'),
@@ -490,6 +514,7 @@ window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); }
 
 render();
 loadWeather().then(render);
+fetch('events.json', { cache: 'no-cache' }).then(r => r.json()).then(j => { eventsData = j; render(); }).catch(() => { eventsData = { items: [], updated: todayIso(), source: 'https://denhaag.com/en/calendar' }; render(); });
 // Weather refreshes every 30 min while open, and when the app comes back to the screen with stale data
 // (phones freeze background timers, so the interval alone isn't enough).
 const WX_MAX_AGE = 30 * 60 * 1000;

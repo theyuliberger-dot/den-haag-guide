@@ -1,6 +1,6 @@
 // Offline support: app files cache-first, weather/photos network-first with cache fallback.
-const CACHE = 'guide-v3';
-const SHELL = ['./', 'index.html', 'data.js', 'app.js', 'manifest.json', 'icon.svg'];
+const CACHE = 'guide-v4';
+const SHELL = ['./', 'index.html', 'data.js', 'app.js', 'manifest.json', 'icon.svg', 'events.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
