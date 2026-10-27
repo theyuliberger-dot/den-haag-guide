@@ -127,6 +127,8 @@ const WCODE = {
 };
 const wc = c => WCODE[c] || ['cloud', L(`—`, `—`)];
 const hm = s => s.slice(11, 16);
+// Sunrise and sunset as two icon-labelled times, so the order is clear in both RTL and LTR.
+const sunVal = (rise, set, small) => `<span class="sunv${small ? " sm" : ""}"><span>${icon("sunrise")}${hm(rise)}</span><span>${icon("sunset")}${hm(set)}</span></span>`;
 const dur = sec => `${Math.floor(sec / 3600)} ${T(UI.h)} ${Math.round((sec % 3600) / 60)} ${T(UI.mn)}`;
 
 async function loadWeather(force) {
@@ -238,7 +240,7 @@ const PAGES = {
     const greet = T(hr < 12 ? UI.morning : hr < 18 ? UI.noon : UI.evening);
     const up = upcomingEvents();
     const nextOff = up.find(e => e.t !== 'nl' && e.off);
-    const nextNl = up.find(e => e.t === 'nl' && e.d >= todayIso());
+    const nextNl = up.find(e => e.t === 'nl' && !e.minor && e.d >= todayIso());
     const ti = dayIdx(todayIso());
 
     let wCard, sCard;
@@ -246,7 +248,7 @@ const PAGES = {
       const c = weather.current, [wi, wt] = wc(c.weather_code), rf = rainFrom();
       wCard = stat('blue', wi, T(UI.wNow), `${Math.round(c.temperature_2m)}°`, `${T(wt)} · ${rf ? T(UI.rainAfter) + rf : T(UI.noRain)}`);
       const d = weather.daily;
-      sCard = stat('amber', 'sunset', T(UI.sun), `<span class="ltr">${hm(d.sunrise[ti])} · ${hm(d.sunset[ti])}</span>`, `${T(UI.dayLen)}: ${dur(d.daylight_duration[ti])}`);
+      sCard = stat('amber', 'sunset', T(UI.sun), sunVal(d.sunrise[ti], d.sunset[ti]), `${T(UI.dayLen)}: ${dur(d.daylight_duration[ti])}`);
     } else {
       const msg = weatherErr ? T(UI.wFail) : T(UI.loading);
       wCard = stat('blue', 'cloud', T(UI.wNow), '—', msg);
@@ -334,7 +336,7 @@ const PAGES = {
     }).join('');
     const sun = d.time.slice(0, 7).map((t, i) => `<div class="row"><div class="dot" style="background:var(--amber-bg);color:var(--amber)">${icon('sunrise')}</div>
         <div><p class="t">${i === 0 ? T(UI.today) : fmt(t, { weekday: 'short', day: 'numeric', month: 'short' })}</p><p class="s">${T(UI.dayLen)}: ${dur(d.daylight_duration[i])}</p></div>
-        <span class="when ltr">${hm(d.sunrise[i])} – ${hm(d.sunset[i])}</span></div>`).join('');
+        <span class="when">${sunVal(d.sunrise[i], d.sunset[i], true)}</span></div>`).join('');
     const year = [
       [L(`21 ביוני (היום הארוך)`, `21 June (longest day)`), `05:20 – 22:05`, L(`כ-16 ש' 45 ד'`, `about 16h 45m`)],
       [L(`21 בדצמבר (היום הקצר)`, `21 December (shortest day)`), `08:45 – 16:30`, L(`כ-7 ש' 45 ד'`, `about 7h 45m`)],
@@ -346,7 +348,7 @@ const PAGES = {
         ${stat('blue', wi, T(UI.wNow), `${Math.round(c.temperature_2m)}°`, `${T(wt)} · ${T(UI.feels)} ${Math.round(c.apparent_temperature)}°`)}
         ${stat('sky', 'umbrella', T(L(`גשם היום`, `Rain today`)), rf || '—', rf ? T(UI.rainAfter) + rf : T(UI.noRain))}
         ${stat('teal', 'wind', T(UI.wind), `${Math.round(c.wind_speed_10m)}`, T(UI.kmh))}
-        ${stat('amber', 'sunset', T(UI.sun), `<span class="ltr">${hm(d.sunrise[0])} · ${hm(d.sunset[0])}</span>`, `${T(UI.dayLen)}: ${dur(d.daylight_duration[0])}`)}
+        ${stat('amber', 'sunset', T(UI.sun), sunVal(d.sunrise[0], d.sunset[0]), `${T(UI.dayLen)}: ${dur(d.daylight_duration[0])}`)}
       </section>
       <section class="grid2"><div class="card"><h2>${icon('calendar-range')}${T(UI.forecast)}</h2>${days}</div>
       <div class="card"><h2>${icon('sunrise')}${T(UI.sunTimes)}</h2>${sun}</div></section>

@@ -1,5 +1,5 @@
 // Offline support: app files cache-first, weather/photos network-first with cache fallback.
-const CACHE = 'guide-v2';
+const CACHE = 'guide-v3';
 const SHELL = ['./', 'index.html', 'data.js', 'app.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', e => {

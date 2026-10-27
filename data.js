@@ -41,9 +41,9 @@ const EVENTS = [
   { d: '2027-07-14', t: 'b', n: L(`יום לימודים אחרון (יסודי עד 12:30, תיכון עד 14:00)`, `Last school day (Primary until 12:30, Secondary until 14:00)`) },
   { d: '2027-07-19', e: '2027-08-27', t: 'b', off: true, n: L(`חופש גדול`, `Summer break`) },
   { d: '2027-09-21', t: 'nl', n: L(`פרינסחסדאח – יום התקציב`, `Prinsjesdag – Budget Day`) },
-  { d: '2026-10-25', t: 'nl', n: L(`מעבר לשעון חורף – השעון זז שעה אחורה`, `Winter time – clocks go back 1 hour`) },
-  { d: '2027-03-28', t: 'nl', n: L(`מעבר לשעון קיץ – השעון זז שעה קדימה`, `Summer time – clocks go forward 1 hour`) },
-  { d: '2027-10-31', t: 'nl', n: L(`מעבר לשעון חורף – השעון זז שעה אחורה`, `Winter time – clocks go back 1 hour`) },
+  { d: '2026-10-25', t: 'nl', minor: true, n: L(`מעבר לשעון חורף – השעון זז שעה אחורה`, `Winter time – clocks go back 1 hour`) },
+  { d: '2027-03-28', t: 'nl', minor: true, n: L(`מעבר לשעון קיץ – השעון זז שעה קדימה`, `Summer time – clocks go forward 1 hour`) },
+  { d: '2027-10-31', t: 'nl', minor: true, n: L(`מעבר לשעון חורף – השעון זז שעה אחורה`, `Winter time – clocks go back 1 hour`) },
   { d: '2027-04-26', t: 'nl', n: L(`קונינגסנאכט – ערב יום המלך, הופעות בעיר`, `Koningsnacht – King's Night, concerts in town`) },
   { d: '2027-05-08', e: '2027-05-09', t: 'nl', n: L(`סוף שבוע טחנות הרוח – כניסה חינם לטחנות`, `National Mill Weekend – free entry to windmills`) },
   { d: '2027-05-09', t: 'nl', n: L(`יום האם`, `Mother's Day`) },
@@ -61,7 +61,7 @@ const EVENTS = [
 for (let y = 2026, m = 10; y < 2027 || m <= 9; m === 11 ? (y++, m = 0) : m++) {
   const d = new Date(y, m, 1);
   while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
-  EVENTS.push({ d: `${y}-${String(m + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, t: 'nl',
+  EVENTS.push({ minor: true, d: `${y}-${String(m + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, t: 'nl',
     n: L(`בדיקת צופרים חודשית ב-12:00 – לא צריך לדאוג`, `Monthly siren test at 12:00 – nothing to worry about`) });
 }
 
